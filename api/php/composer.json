@@ -1,0 +1,12 @@
+{
+    "name": "nicolai/phpapi",
+    "require": {
+        "doctrine/dbal": "^2.5"
+    },
+    "authors": [
+        {
+            "name": "Nicolai Tellefsen",
+            "email": "nicolai@ntellefsen.no"
+        }
+    ]
+}
