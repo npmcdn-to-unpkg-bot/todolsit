@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Todo - jQuery</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" type="text/css" media="screen" charset="utf-8">
+		<script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
+		<script src="todo-jquery.js"></script>
+		<style type="text/css" media="screen">
+			.task-list {
+				font-size: 16px;
+			}
+			.task-list .title {
+				padding: 0 5px 0 10px;
+				font-weight: 700;
+			}
+			.task-list .description {
+				color: #C3C3C3;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h3>Tasks</h3>
+			<ul class="task-list list-group">
+				<li class="task-template list-group-item"> <input class="status" type="CHECKBOX" /> <span class="title">Tittel</span> <span class="description">Description</span></li>
+			</ul>
+			<hr />
+			<div class="task-editor">
+				<input class="id" type="hidden" />
+				<div class="form-inline">
+					<div class="form-group">
+						<input class="status form-control" type="CHECKBOX" />
+						<input class="title form-control" placeholder="Title" type="TEXT" />
+						<input class="description form-control" placeholder="Description" type="TEXT" />
+						<button class="btn btn-primary save form-control">Save changes</button>
+						<button class="btn btn-danger delete disabled">Delete</button>
+					</div>
+				</div>
+				<br />
+				<div class="form-inline">
+					<div class="form-group">
+						<button class="btn btn-secondary new">Create new task</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<nav>
+		</nav>
+		
+	</body>
+</html>
