@@ -4,6 +4,15 @@ var bodyParser  = require('body-parser');
 var jsonParser  = bodyParser.json();
 var app = express();
 
+// Middleware to insert access control headers
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
+});
+
 // Routing
 app.get('/task/:id?', function (req, res) {
 	taskApi.get(req, res);
@@ -51,18 +60,17 @@ taskApi.get = function(req, res) {
 				res.end(JSON.stringify(row));
 			} else {
 				res.writeHeader(404, {'Content-Type': 'application/json'});
-				res.end();
+				res.end("{}");
 			}
 		});
 	} else {
 		conn.all("SELECT * FROM task", function(err, rows) {
-			console.log(rows);
 			if(rows.length > 0) {
 				res.writeHeader(200, {'Content-Type': 'application/json'});
 				res.end(JSON.stringify(rows));
 			} else {
 				res.writeHeader(404, {'Content-Type': 'application/json'});
-				res.end();
+				res.end("{}");
 			}
 		});
 	}
@@ -82,7 +90,7 @@ taskApi.post = function(req, res) {
 			});
 		} else {
 			res.writeHeader(500, {'Content-Type': 'application/json'});
-			res.end();
+			res.end("{}");
 		}
 	});
 };
@@ -97,10 +105,11 @@ taskApi.put = function(req, res) {
 	}, function(err) {
 		if(this.changes === 1) {
 			res.writeHeader(200, {'Content-Type': 'application/json'});
+			res.end(JSON.stringify(req.body));
 		} else {
 			res.writeHeader(304, {'Content-Type': 'application/json'});
+			res.end("{}");
 		}
-		res.end();
 	});
 };
 
@@ -114,7 +123,7 @@ taskApi.delete = function(req, res) {
 		} else {
 			res.writeHeader(404, {'Content-Type': 'application/json'});
 		}
-		res.end();
+		res.end("{}");
 	});
 };
 

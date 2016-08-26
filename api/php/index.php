@@ -73,6 +73,7 @@ class taskApi {
 			echo json_encode($tasks);
 			http_response_code(200);
 		} else {
+			echo "{}";
 			http_response_code(404);
 		}
 	}
@@ -89,6 +90,7 @@ class taskApi {
 			echo json_encode($this->conn->fetchAssoc('SELECT * FROM task WHERE id = ?', array($id)));
 			http_response_code(201);
 		} else {
+			echo "{}";
 			http_response_code(500);
 		}
 	}
@@ -101,8 +103,10 @@ class taskApi {
 		), array('id' => $id));
 
 		if($success) {
+			echo json_encode($this->conn->fetchAssoc('SELECT * FROM task WHERE id = ?', array($id)));
 			http_response_code(200);
 		} else {
+			echo "{}";
 			http_response_code(304);
 		}
 	}
@@ -115,6 +119,7 @@ class taskApi {
 		} else {
 			http_response_code(404);
 		}
+		echo "{}";
 	}
 }
 ?>
