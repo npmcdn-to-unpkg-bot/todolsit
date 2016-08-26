@@ -1,4 +1,6 @@
 <?php
+header('Content-Type: application/json');
+
 require __DIR__ . '/vendor/autoload.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
