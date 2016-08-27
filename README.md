@@ -30,8 +30,8 @@ Startup
 Usage
 -----
 
-The jQuery frontend is available at:
-[http://127.0.0.1:8000/frontend/index.html](http://127.0.0.1:8000/frontend/index.html)
+The jQuery frontend is available at (don't use "/frontend/jquery/" directly without index.html):
+[http://127.0.0.1:8000/frontend/jquery/index.html](http://127.0.0.1:8000/frontend/jquery/index.html)
 
 The PHP api is available at:
 [http://127.0.0.1:8000/api/php/task/](http://127.0.0.1:8000/api/php/task/)
