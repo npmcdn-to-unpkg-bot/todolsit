@@ -5,47 +5,86 @@ var api = '/api/php/task/';
 class TodoApp extends React.Component {
 	constructor() {
 		super();
-		this.state = {'tasks': {}};
-		this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
-		this.handleStatusChange = this.handleStatusChange.bind(this);
+		this.state = {
+			'tasks': {},
+			//temptask is used when we are editing a NEW task
+			'temptask': {
+				'id': undefined,
+				'title': '',
+				'description': '',
+				'status': false,
+			},
+			//editing is used when we are editing an existing task
+			'editing': undefined
+			};
+		this.deleteTask = this.deleteTask.bind(this);
+		this.saveTask = this.saveTask.bind(this);
+		this.editTask = this.editTask.bind(this);
+		this.editTaskPreview = this.editTaskPreview.bind(this);
+		this.editTaskComplete = this.editTaskComplete.bind(this);
 	}
 	componentDidMount() {
 		this.getTasks();
 	}
-	handleTaskSubmit(task) {
-		$.ajax({
-			url: this.props.url,
-			type: 'POST',
-			dataType: 'json',
-			contentType: "application/json",
-			data: JSON.stringify(task),
-			success: function (data, textStatus, jqXHR) {
-				var tasks = this.state.tasks;
-				tasks[data.id] = this.cleanTaskObj(data);
-				this.setState({ 'tasks': tasks });
-			}.bind(this),
-			error: function (jqXHR, textStatus, error) {
-				console.log(error);
-			}
-		});
+	//Update or create task based on input
+	saveTask(task) {
+		if(task.id !== undefined) {
+			$.ajax({
+				url: this.props.url + task.id,
+				type: 'PUT',
+				dataType: 'json',
+				contentType: "application/json",
+				data: JSON.stringify(task),
+				success: function (data, textStatus, jqXHR) {
+					var tasks = this.state.tasks;
+					tasks[data.id] = this.cleanTaskObj(data);
+					this.setState({ 'tasks': tasks });
+				}.bind(this),
+				error: function (jqXHR, textStatus, error) {
+					console.log(error);
+				}
+			});
+		} else {
+			$.ajax({
+				url: this.props.url,
+				type: 'POST',
+				dataType: 'json',
+				contentType: "application/json",
+				data: JSON.stringify(task),
+				success: function (data, textStatus, jqXHR) {
+					var tasks = this.state.tasks;
+					tasks[data.id] = this.cleanTaskObj(data);
+					this.setState({ 'tasks': tasks });
+				}.bind(this),
+				error: function (jqXHR, textStatus, error) {
+					console.log(error);
+				}
+			});
+		}
 	}
-	handleStatusChange(task) {
+	//Delete task
+	deleteTask(task) {
 		$.ajax({
 			url: this.props.url + task.id,
-			type: 'PUT',
+			type: 'DELETE',
 			dataType: 'json',
 			contentType: "application/json",
 			data: JSON.stringify(task),
 			success: function (data, textStatus, jqXHR) {
 				var tasks = this.state.tasks;
-				tasks[data.id] = this.cleanTaskObj(data);
+				delete tasks[task.id];
 				this.setState({ 'tasks': tasks });
 			}.bind(this),
 			error: function (jqXHR, textStatus, error) {
 				console.log(error);
 			}
 		});
+		//If we are editing the deleted task, stop editing
+		if(task.id == this.state.editing) {
+			this.editTaskComplete();
+		}
 	}
+	//Get all tasks
 	getTasks() {
 		$.ajax({
 			url: this.props.url,
@@ -61,6 +100,33 @@ class TodoApp extends React.Component {
 			}
 		});
 	}
+	//Start editing a task
+	editTask(task) {
+		this.setState({ 'editing': task.id });
+	}
+	//Preview any changes to task, without saving to Api
+	editTaskPreview(task) {
+		if(task.id !== undefined) {
+			var tasks = this.state.tasks;
+			tasks[task.id] = task;
+			this.setState({ 'tasks': tasks });
+		} else {
+			this.setState({ 'temptask': task });
+		}
+	}
+	//Stop editing
+	editTaskComplete() {
+		this.setState({
+				'editing': undefined,
+				'temptask': {
+					'id': undefined,
+					'title': '',
+					'description': '',
+					'status': false,
+				}
+			});
+	}
+	//Helper classes to simplify task import
 	cleanTaskObj(task) {
 		if(task.status === false || task.status === "false" || task.status === null || task.status === "0" || task.status === 0) {
 			task.status = false;
@@ -77,9 +143,11 @@ class TodoApp extends React.Component {
 		return tasksObj;
 	}
 	render() {
+		var activeTask = this.state.editing ? this.state.tasks[this.state.editing] : this.state.temptask;
 		return <div className="todo-app">
-			<TaskList tasks={this.state.tasks} onStatusChange={this.handleStatusChange}/>
-			<TaskEditor onTaskSubmit={this.handleTaskSubmit}/>
+			<TaskList tasks={this.state.tasks} active={activeTask.id} onChange={this.saveTask} onEditStart={this.editTask} onDelete={this.deleteTask}/>
+			<hr />
+			<TaskEditor task={activeTask} onChange={this.editTaskPreview} onSubmit={this.saveTask} onComplete={this.editTaskComplete}/>
 		</div>
 	}
 }
@@ -89,84 +157,95 @@ class TaskList extends React.Component {
 	render() {
 		var tasksObj = [];
 		for(var i in this.props.tasks) {
-			tasksObj.push(<Task key={this.props.tasks[i].id} title={this.props.tasks[i].title} id={this.props.tasks[i].id} description={this.props.tasks[i].description} status={this.props.tasks[i].status} onStatusChange={this.props.onStatusChange}/>);
+			var active = this.props.active == this.props.tasks[i].id;
+			tasksObj.push(<Task active={active} key={this.props.tasks[i].id} title={this.props.tasks[i].title} id={this.props.tasks[i].id} description={this.props.tasks[i].description} status={this.props.tasks[i].status} onChange={this.props.onChange} onEditStart={this.props.onEditStart} onDelete={this.props.onDelete}/>);
 		};
-		return <ul className="task-list">
-			<h2>List</h2>
+		return <ul className="task-list list-group">
+			<h2>Tasks</h2>
 			{ tasksObj }
 		</ul>
 	}
 }
 
-// Task item component. Displays a task as an li element, with interactive checkbox
+// Task item component. Displays a task as an li element, with some interactive elements
 class Task extends React.Component {
 	constructor() {
 		super();
 		this.handleStatusChange = this.handleStatusChange.bind(this);
+		this.handleDelete = this.handleDelete.bind(this);
+		this.handleEditStart = this.handleEditStart.bind(this);
 	}
+	//Invert status
 	handleStatusChange(e) {
-		this.props.onStatusChange({
+		this.props.onChange({
 			'id': this.props.id,
 			'status': !this.props.status,
 			'title': this.props.title,
 			'description': this.props.description
 		});
 	}
+	//Delete task
+	handleDelete(e) {
+		this.props.onDelete(this.getTask());
+	}
+	//Start editing task
+	handleEditStart(e) {
+		this.props.onEditStart(this.getTask());
+	}
+	//Get task object
+	getTask() {
+		return {
+			'id': this.props.id,
+			'status': this.props.status,
+			'title': this.props.title,
+			'description': this.props.description
+		};
+	}
 	render() {
-		return <li className="task task-{this.props.id}">
+		//A bit hacky way to set classes, didn't want to include extra libraries
+		var activeClass = this.props.active ? 'active' : '';
+		var classes = "task tasks-" + this.props.id + " list-group-item " + activeClass;
+		return <li className={classes}>
 			<input className="status" type="checkbox" checked={this.props.status} onChange={this.handleStatusChange}/> 
 			<span className="title">{this.props.title}</span> 
 			<span className="description">{this.props.description}</span>
+			<nav className="actions">
+				<button className="delete btn btn-default" onClick={this.handleDelete}>Delete</button>
+				<button className="edit btn btn-primary" onClick={this.handleEditStart}>Edit</button>
+			</nav>
 		</li>
 	}
 }
 
-// Task editor component. Displays a form for creating new task
-// Todo: Enable editing of existing tasks, and deletion
+// Task editor component. Displays a form for editing a task object
 class TaskEditor extends React.Component {
 	constructor() {
 		super();
-		this.state = { 
-			'id': undefined,
-			'title': '',
-			'description': '',
-			'status': false
-		};
-		this.handleStatusChange = this.handleStatusChange.bind(this);
-		this.handleTitleChange = this.handleTitleChange.bind(this);
-		this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
+		this.handleChange = this.handleChange.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
 	}
-	handleStatusChange(e) {
-		this.setState({ 'status': e.target.checked });
+	//Change
+	handleChange(e) {
+		var newTask = this.props.task;
+		newTask[e.target.name] = e.target.type == "checkbox" ? e.target.checked : e.target.value;
+		this.props.onChange(newTask);
 	}
-	handleTitleChange(e) {
-		this.setState({ 'title': e.target.value });
-	}
-	handleDescriptionChange(e) {
-		this.setState({ 'description': e.target.value });
-	}
+	//Save changes
 	handleSubmit(e) {
 		e.preventDefault();
-		this.props.onTaskSubmit({
-			'id': this.state.id,
-			'status': this.state.status,
-			'title': this.state.title,
-			'description': this.state.description
-		});
-		this.setState({
-			'id': undefined,
-			'title': '',
-			'description': '',
-			'status': false
-		});
+		this.props.onSubmit(this.props.task);
+		this.props.onComplete();
 	}
 	render() {
-		return <form className="form" onSubmit={this.handleSubmit}>
-			<input className="status" type="checkbox" checked={this.state.status} onChange={this.handleStatusChange}/>
-			<input className="title" type="text" placeholder="Title" value={this.state.title} onChange={this.handleTitleChange}/>
-			<input className="description" type="text" placeholder="Description" value={this.state.description} onChange={this.handleDescriptionChange}/>
-			<button className="create">Add</button>
+		var task = this.props.task ? this.props.task : {'id': undefined, 'status': false, 'title': '', 'description': ''};
+		return <form className="form-inline" onSubmit={this.handleSubmit}>
+			<div className="form-group">
+				<input className="id form-control" name="id" type="hidden" checked={task.id}/>
+				<input className="status form-control" name="status" type="checkbox" checked={task.status} onChange={this.handleChange}/>
+				<input className="title form-control" name="title" type="text" placeholder="Title" value={task.title} onChange={this.handleChange}/>
+				<input className="description form-control" name="description" type="text" placeholder="Description" value={task.description} onChange={this.handleChange}/>
+				<button className="create btn btn-primary form-control">{task.id === undefined ? 'Add' : 'Save'}</button>
+			</div>
 		</form>
 	}
 }
